@@ -17,16 +17,18 @@ module.exports = {
         decay: '#0f2027',
       },
       fontFamily: {
-        display: ['var(--font-casket)', 'serif'],
-        drip: ['var(--font-casket-drip)', 'serif'],
+        display: ['var(--font-boldonse)', 'serif'],
         mono: ['var(--font-supply)', 'monospace'],
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        bebas: ['var(--font-bebas)', 'sans-serif'],
+        playfair: ['var(--font-playfair)', 'serif'],
+        elite: ['var(--font-elite)', 'monospace'],
       },
       animation: {
         'fade-in': 'fadeIn 1s ease-out forwards',
         'slide-up': 'slideUp 0.8s ease-out forwards',
         'glow-pulse': 'glowPulse 3s ease-in-out infinite',
-        grain: 'grain 0.5s steps(1) infinite',
+        'grain': 'grain 0.5s steps(1) infinite',
       },
       keyframes: {
         fadeIn: {
