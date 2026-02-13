@@ -45,6 +45,7 @@ export default function SceneController() {
   const [showCta, setShowCta] = useState(false)
   const [audioBands, setAudioBands] = useState<AudioBands>({ bass: 0, mid: 0, high: 0, overall: 0 })
   const [ghostPosition, setGhostPosition] = useState<{ x: number; y: number }>({ x: -1, y: -1 })
+  const [glitchTrigger, setGlitchTrigger] = useState(0)
   const audioRef = useRef<any>(null)
   const phaseRef = useRef<Phase>('static')
 
@@ -187,7 +188,11 @@ export default function SceneController() {
           className="fixed inset-0 z-10 transition-opacity duration-1000"
           style={{ opacity: ghostOpacity }}
         >
-          <GhostCanvas onReady={handleGhostReady} />
+          <GhostCanvas
+            onReady={handleGhostReady}
+            glitchTrigger={glitchTrigger}
+            gMorphEnabled={phase === 'ghost-return'}
+          />
         </div>
       )}
 
@@ -212,7 +217,10 @@ export default function SceneController() {
       )}
 
       {/* Glitch Text Overlay — appears during ghost return */}
-      <GlitchText active={phase === 'ghost-return'} />
+      <GlitchText
+        active={phase === 'ghost-return'}
+        onGlitch={() => setGlitchTrigger(c => c + 1)}
+      />
 
       {/* CTA Overlay */}
       <CtaOverlay isVisible={showCta} />

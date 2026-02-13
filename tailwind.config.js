@@ -17,8 +17,10 @@ module.exports = {
         decay: '#0f2027',
       },
       fontFamily: {
-        display: ['var(--font-boldonse)', 'serif'],
-        mono: ['var(--font-supply)', 'monospace'],
+        display: ['var(--font-display)', 'serif'],
+        casket: ['Casket', 'serif'],
+        'casket-drip': ['CasketDrip', 'serif'],
+        mono: ['var(--font-elite)', 'monospace'],
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
         bebas: ['var(--font-bebas)', 'sans-serif'],
         playfair: ['var(--font-playfair)', 'serif'],

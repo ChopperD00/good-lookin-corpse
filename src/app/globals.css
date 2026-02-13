@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Casket (Coffin) Font Faces ─────────────────────────── */
+@font-face {
+  font-family: 'Casket';
+  src: url('/fonts/CasketRegular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'CasketDrip';
+  src: url('/fonts/CasketDrip.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ─── Base Reset ──────────────────────────────────────────── */
 * {
   margin: 0;
@@ -97,4 +114,90 @@ canvas {
 
 .glitch-flicker {
   animation: glitchFlicker 0.15s steps(1) infinite;
+}
+
+/* ─── Kinetic Typography ─────────────────────────────────── */
+.kinetic-type {
+  position: fixed;
+  height: 100vmax;
+  width: 100vmax;
+  text-transform: uppercase;
+  display: grid;
+  justify-content: center;
+  align-content: center;
+  text-align: center;
+  top: 50%;
+  left: 50%;
+  margin-top: -50vmax;
+  margin-left: -50vmax;
+  will-change: transform;
+  z-index: 15;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.kinetic-type.active {
+  opacity: 1;
+}
+
+.kinetic-line {
+  white-space: nowrap;
+  font-size: clamp(5rem, 15vh, 12rem);
+  line-height: 0.75;
+  font-weight: bold;
+  font-family: 'Casket', serif;
+  color: #ffffff;
+  opacity: 0.04;
+  user-select: none;
+  will-change: transform, opacity;
+  position: relative;
+}
+
+/* ─── Split character containers ─────────────────────────── */
+.split-char {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  will-change: max-width, transform;
+  transition: max-width 0.6s cubic-bezier(0.86, 0, 0.07, 1);
+}
+
+.split-char-inner {
+  display: inline-block;
+  position: relative;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.6s cubic-bezier(0.86, 0, 0.07, 1);
+}
+
+.split-char.expanded .split-char-inner {
+  transform: translate3d(-15px, 0, 0);
+}
+
+.split-char::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 80%;
+  background-color: rgba(0, 255, 255, 0.15);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.split-char.expanded::after {
+  opacity: 1;
+}
+
+/* ─── Subtitle scramble ──────────────────────────────────── */
+@keyframes subtitlePulse {
+  0%, 100% { opacity: 0.4; letter-spacing: 0.5em; }
+  50% { opacity: 0.55; letter-spacing: 0.55em; }
+}
+
+.subtitle-pulse {
+  animation: subtitlePulse 4s ease-in-out infinite;
 }
