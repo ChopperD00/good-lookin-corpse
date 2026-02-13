@@ -260,7 +260,7 @@ export default function CtaOverlay({ isVisible }: CtaOverlayProps) {
 
   return (
     <div
-      className={`fixed inset-0 z-10 flex flex-col items-center pointer-events-none transition-opacity duration-1000 ${
+      className={`fixed inset-0 z-30 flex flex-col items-center pointer-events-none transition-opacity duration-1000 ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >
@@ -299,7 +299,7 @@ export default function CtaOverlay({ isVisible }: CtaOverlayProps) {
             </span>
           </h1>
           <p
-            className={`mt-4 font-mono text-[10px] sm:text-xs text-white/30 tracking-[0.5em] uppercase transition-all duration-1000 delay-500 ${
+            className={`mt-8 font-mono text-[11px] sm:text-sm text-white/40 tracking-[0.5em] uppercase transition-all duration-1000 delay-500 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
