@@ -163,7 +163,7 @@ function GlitchLine({
         color: '#e5e5e5',
         textShadow: glitching
           ? '2px 0 #00ffff, -2px 0 #ff4500, 0 0 20px rgba(0,255,255,0.3)'
-          : '0 0 10px rgba(229,229,229,0.15)',
+          : '0 0 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.7), 0 0 10px rgba(229,229,229,0.2)',
         transform: glitching
           ? `translate(${(Math.random() - 0.5) * 3}px, ${(Math.random() - 0.5) * 2}px)`
           : 'none',
@@ -201,7 +201,17 @@ export default function GlitchText({ active = false, className = '', onComplete 
         ${className}
       `}
     >
-      <div className="flex flex-col items-center gap-2 md:gap-3">
+      {/* Dark vignette behind text for readability over angel particles */}
+      {active && (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.3) 50%, transparent 80%)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+      <div className="relative flex flex-col items-center gap-2 md:gap-3">
         {LINES.map((line, i) => (
           <GlitchLine
             key={i}

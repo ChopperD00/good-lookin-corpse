@@ -119,8 +119,8 @@ export default function SceneController() {
 
     // Fade in angel particles
     setAngelOpacity(1)
-    // Add some static back as texture
-    setStaticOpacity(0.08)
+    // Keep a good amount of static as background texture
+    setStaticOpacity(0.12)
 
     initAudio()
 
@@ -136,10 +136,11 @@ export default function SceneController() {
   useEffect(() => {
     if (phase !== 'ghost-return') return
 
-    // Keep angels visible! Ghost flies through them
-    // Angels react to ghost position
+    // Dim angel particles so glitch text is readable
+    setAngelOpacity(0.35)
     setGhostOpacity(1)
-    setStaticOpacity(0.04)
+    // Keep visible static in the background
+    setStaticOpacity(0.10)
 
     // Show CTA after glitch text completes
     const ctaTimer = setTimeout(() => {

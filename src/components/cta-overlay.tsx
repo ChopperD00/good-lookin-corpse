@@ -21,7 +21,7 @@ export default function CtaOverlay({ isVisible }: CtaOverlayProps) {
     <div className={`fixed inset-0 z-10 flex flex-col items-center justify-end pb-[12vh] pointer-events-none transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
       <div className={`text-center mb-8 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <h1 className="font-display text-4xl sm:text-5xl md:text-6xl text-spectral tracking-tight leading-none">GOOD LOOKIN<br />CORPSE</h1>
-        <p className="mt-3 font-mono text-[10px] sm:text-xs text-white/40 tracking-[0.4em] uppercase">Veil of Dust &middot; Trail of Ash &middot; Heart of Ice</p>
+        <p className="mt-3 font-mono text-[10px] sm:text-xs text-white/40 tracking-[0.4em] uppercase">Can&apos;t Kill What&apos;s Already Dead</p>
       </div>
       <div className={`pointer-events-auto transition-all duration-1000 delay-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         {!showForm && !submitted && (
