@@ -258,6 +258,45 @@ export default function ValentineTeaser() {
         </div>
       </div>
 
+      {/* ─── GLITCH PHRASE — "Live Fast, Die Young" ─── */}
+      <div
+        className="absolute z-15 inset-0 flex flex-col items-center justify-center pointer-events-none select-none -translate-y-[8vh]"
+        style={{
+          opacity: phaseIndex >= 5 ? 0.7 : 0,
+          transition: 'opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.5s',
+        }}
+      >
+        <div className="text-center">
+          <div
+            className="font-display tracking-wider leading-none text-spectral"
+            style={{
+              fontSize: 'clamp(2rem, 7vw, 5rem)',
+              textShadow: '0 0 30px rgba(229,229,229,0.1)',
+            }}
+          >
+            LIVE FAST
+          </div>
+          <div
+            className="font-display tracking-wider leading-none text-spectral mt-2"
+            style={{
+              fontSize: 'clamp(2rem, 7vw, 5rem)',
+              textShadow: '0 0 30px rgba(229,229,229,0.1)',
+            }}
+          >
+            DIE YOUNG
+          </div>
+          <div
+            className="font-display tracking-wider leading-none text-spectral mt-2"
+            style={{
+              fontSize: 'clamp(2rem, 7vw, 5rem)',
+              textShadow: '0 0 30px rgba(229,229,229,0.1)',
+            }}
+          >
+            and leave a
+          </div>
+        </div>
+      </div>
+
       {/* ─── BRAND LOCKUP ─── */}
       <div
         className="absolute z-20 inset-0 flex flex-col items-center justify-end pb-[5vh] pointer-events-none"
