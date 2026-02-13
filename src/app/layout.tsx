@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import localFont from 'next/font/local'
+import { Inter, Creepster, Bebas_Neue, Playfair_Display, Special_Elite } from 'next/font/google'
 import './globals.css'
 
 const inter = Inter({
@@ -9,29 +8,40 @@ const inter = Inter({
   display: 'swap',
 })
 
-// Casket — gothic display typeface
-const casket = localFont({
-  src: [
-    { path: '../../public/fonts/CasketRegular.woff', weight: '400', style: 'normal' },
-  ],
-  variable: '--font-casket',
+// Gothic display font — swap to Boldonse when font files are available
+const creepster = Creepster({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-display',
   display: 'swap',
 })
 
-// Casket Drip — dripping variant for accent text
-const casketDrip = localFont({
-  src: [
-    { path: '../../public/fonts/CasketDrip.woff', weight: '400', style: 'normal' },
-  ],
-  variable: '--font-casket-drip',
+// Glitch-cycle fonts — contrasting typefaces for kinetic typography
+const bebasNeue = Bebas_Neue({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-bebas',
+  display: 'swap',
+})
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-playfair',
+  display: 'swap',
+})
+
+const specialElite = Special_Elite({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-elite',
   display: 'swap',
 })
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://goodlookincorpse.com'),
-  title: 'Good Lookin Corpse \u2014 Gothic Streetwear',
+  title: 'Good Lookin Corpse — Gothic Streetwear',
   description:
-    'Veil of Dust. Trail of Ash. Heart of Ice. Gothic streetwear dropping March 28, 2026.',
+    "Can't Kill What's Already Dead. Gothic streetwear dropping March 28, 2026.",
   keywords: ['streetwear', 'gothic', 'fashion', 'good lookin corpse', 'clothing'],
   openGraph: {
     title: 'Good Lookin Corpse',
@@ -43,7 +53,7 @@ export const metadata: Metadata = {
         url: '/images/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Good Lookin Corpse \u2014 Spectral Ghost',
+        alt: 'Good Lookin Corpse — Spectral Ghost',
       },
     ],
     locale: 'en_US',
@@ -67,7 +77,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${casket.variable} ${casketDrip.variable}`}>
+    <html lang="en" className={`${inter.variable} ${creepster.variable} ${bebasNeue.variable} ${playfair.variable} ${specialElite.variable}`}>
       <body className="bg-black text-spectral font-sans antialiased grain-overlay">
         {children}
       </body>
