@@ -197,7 +197,7 @@ export default function GlitchText({ active = false, className = '', onComplete 
     <div
       className={`
         fixed inset-0 z-20 flex flex-col items-center justify-center
-        pointer-events-none select-none
+        pointer-events-none select-none -translate-y-[5vh]
         ${className}
       `}
     >
