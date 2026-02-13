@@ -43,6 +43,7 @@ export default function SceneController() {
   const [ghostOpacity, setGhostOpacity] = useState(0)
   const [angelOpacity, setAngelOpacity] = useState(0)
   const [showCta, setShowCta] = useState(false)
+  const [glitchTextFading, setGlitchTextFading] = useState(false)
   const [audioBands, setAudioBands] = useState<AudioBands>({ bass: 0, mid: 0, high: 0, overall: 0 })
   const [ghostPosition, setGhostPosition] = useState<{ x: number; y: number }>({ x: -1, y: -1 })
   const [glitchTrigger, setGlitchTrigger] = useState(0)
@@ -143,7 +144,10 @@ export default function SceneController() {
     // Keep visible static in the background
     setStaticOpacity(0.10)
 
-    // Show CTA after glitch text completes
+    // Fade glitch text, then show CTA brand mark
+    const fadeTimer = setTimeout(() => {
+      setGlitchTextFading(true)
+    }, 2500)
     const ctaTimer = setTimeout(() => {
       setShowCta(true)
     }, 3000)
@@ -163,7 +167,10 @@ export default function SceneController() {
     }
     requestAnimationFrame(updateGhostPos)
 
-    return () => clearTimeout(ctaTimer)
+    return () => {
+      clearTimeout(fadeTimer)
+      clearTimeout(ctaTimer)
+    }
   }, [phase])
 
   // Cleanup audio on unmount
@@ -216,11 +223,16 @@ export default function SceneController() {
         </div>
       )}
 
-      {/* Glitch Text Overlay — appears during ghost return */}
-      <GlitchText
-        active={phase === 'ghost-return'}
-        onGlitch={() => setGlitchTrigger(c => c + 1)}
-      />
+      {/* Glitch Text Overlay — appears during ghost return, fades before CTA */}
+      <div
+        className="transition-opacity duration-700"
+        style={{ opacity: glitchTextFading ? 0 : 1 }}
+      >
+        <GlitchText
+          active={phase === 'ghost-return'}
+          onGlitch={() => setGlitchTrigger(c => c + 1)}
+        />
+      </div>
 
       {/* CTA Overlay */}
       <CtaOverlay isVisible={showCta} />
