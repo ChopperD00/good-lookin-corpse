@@ -5,16 +5,14 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 /**
  * GlitchText — Kinetic typography overlay
  * Recreates GSAP SplitText/ScrambleText effects with vanilla JS + CSS
- * Text: "LIVE FAST / DIE YOUNG / and leave a / GOOD LOOKING CORPSE"
+ * Text: "LIVE FAST / DIE YOUNG / and leave a"
  */
 
 const SCRAMBLE_CHARS = '■▪▌▐▬░▒▓█▄▀'
 const LINES = [
   { text: 'LIVE FAST', font: 'font-display', size: 'text-5xl md:text-7xl lg:text-8xl', weight: 'font-normal' },
   { text: 'DIE YOUNG', font: 'font-display', size: 'text-5xl md:text-7xl lg:text-8xl', weight: 'font-normal' },
-  { text: 'and leave a', font: 'font-sans', size: 'text-lg md:text-2xl lg:text-3xl', weight: 'font-light', italic: true },
-  { text: 'GOOD LOOKING', font: 'font-drip', size: 'text-4xl md:text-6xl lg:text-7xl', weight: 'font-normal' },
-  { text: 'CORPSE', font: 'font-drip', size: 'text-5xl md:text-7xl lg:text-9xl', weight: 'font-normal' },
+  { text: 'and leave a', font: 'font-display', size: 'text-5xl md:text-7xl lg:text-8xl', weight: 'font-normal' },
 ]
 
 interface GlitchTextProps {
