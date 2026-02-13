@@ -17,7 +17,8 @@ module.exports = {
         decay: '#0f2027',
       },
       fontFamily: {
-        display: ['var(--font-display)', 'serif'],
+        display: ['var(--font-casket)', 'serif'],
+        drip: ['var(--font-casket-drip)', 'serif'],
         mono: ['var(--font-supply)', 'monospace'],
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
       },
@@ -28,15 +29,28 @@ module.exports = {
         grain: 'grain 0.5s steps(1) infinite',
       },
       keyframes: {
-        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-        slideUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
-        glowPulse: { '0%, 100%': { opacity: '0.4', filter: 'blur(20px)' }, '50%': { opacity: '0.8', filter: 'blur(30px)' } },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { opacity: '0', transform: 'translateY(30px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        glowPulse: {
+          '0%, 100%': { opacity: '0.4', filter: 'blur(20px)' },
+          '50%': { opacity: '0.8', filter: 'blur(30px)' },
+        },
         grain: {
           '0%, 100%': { transform: 'translate(0, 0)' },
           '10%': { transform: 'translate(-5%, -10%)' },
+          '20%': { transform: 'translate(-15%, 5%)' },
           '30%': { transform: 'translate(7%, -25%)' },
+          '40%': { transform: 'translate(-5%, 25%)' },
           '50%': { transform: 'translate(-15%, 10%)' },
+          '60%': { transform: 'translate(15%, 0%)' },
           '70%': { transform: 'translate(0%, 15%)' },
+          '80%': { transform: 'translate(3%, 35%)' },
           '90%': { transform: 'translate(-10%, 10%)' },
         },
       },
