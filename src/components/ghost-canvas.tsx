@@ -2,9 +2,13 @@
 
 import { useEffect, useRef, useCallback } from 'react'
 
-interface GhostCanvasProps { onReady: () => void }
+interface GhostCanvasProps {
+  onReady: () => void
+  glitchTrigger?: number
+  gMorphEnabled?: boolean
+}
 
-export default function GhostCanvas({ onReady }: GhostCanvasProps) {
+export default function GhostCanvas({ onReady, glitchTrigger = 0, gMorphEnabled = false }: GhostCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const sceneRef = useRef<any>(null)
 
@@ -45,6 +49,20 @@ export default function GhostCanvas({ onReady }: GhostCanvasProps) {
       sceneRef.current?.destroy()
     }
   }, [onReady, handleMouseMove, handleTouchMove])
+
+  // Trigger glitch flash when counter increments
+  useEffect(() => {
+    if (glitchTrigger > 0 && sceneRef.current) {
+      sceneRef.current.triggerGlitch()
+    }
+  }, [glitchTrigger])
+
+  // Enable/disable G morph
+  useEffect(() => {
+    if (sceneRef.current) {
+      sceneRef.current.setGMorphEnabled(gMorphEnabled)
+    }
+  }, [gMorphEnabled])
 
   return <canvas ref={canvasRef} className="fixed inset-0 w-full h-full z-0" style={{ background: 'transparent' }} />
 }

@@ -19,6 +19,7 @@ interface GlitchTextProps {
   active?: boolean
   className?: string
   onComplete?: () => void
+  onGlitch?: () => void
 }
 
 /** Scramble a string with random glitch chars, revealing over time */
@@ -48,6 +49,7 @@ function GlitchLine({
   weight,
   delay,
   active,
+  onGlitch,
 }: {
   text: string
   font: string
@@ -55,6 +57,7 @@ function GlitchLine({
   weight: string
   delay: number
   active: boolean
+  onGlitch?: () => void
 }) {
   const [displayText, setDisplayText] = useState('')
   const [revealed, setRevealed] = useState(false)
@@ -117,6 +120,7 @@ function GlitchLine({
       setTimeout(() => {
         if (cancelled) return
         setGlitching(true)
+        onGlitch?.()
         // Brief scramble
         let frame = 0
         const maxFrames = 4 + Math.floor(Math.random() * 6)
@@ -146,7 +150,7 @@ function GlitchLine({
 
     microGlitch()
     return () => { cancelled = true }
-  }, [revealed, active, text])
+  }, [revealed, active, text, onGlitch])
 
   const opacity = displayText ? 0.85 : 0
 
@@ -174,7 +178,7 @@ function GlitchLine({
   )
 }
 
-export default function GlitchText({ active = false, className = '', onComplete }: GlitchTextProps) {
+export default function GlitchText({ active = false, className = '', onComplete, onGlitch }: GlitchTextProps) {
   const completedRef = useRef(false)
 
   useEffect(() => {
@@ -211,6 +215,7 @@ export default function GlitchText({ active = false, className = '', onComplete 
             weight={line.weight}
             delay={i * 300}
             active={active}
+            onGlitch={onGlitch}
           />
         ))}
       </div>

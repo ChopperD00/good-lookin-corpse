@@ -178,6 +178,17 @@ const analogDecayShader = {
   `,
 }
 
+// ─── G Morph Timing Constants ────────────────────────────────────────
+const G_MORPH_IN_DURATION = 1.5      // seconds to morph ghost → G
+const G_MORPH_HOLD_DURATION = 2.5    // seconds to hold G shape
+const G_MORPH_OUT_DURATION = 1.5     // seconds to morph G → ghost
+const G_MORPH_TOTAL = G_MORPH_IN_DURATION + G_MORPH_HOLD_DURATION + G_MORPH_OUT_DURATION
+const G_MORPH_BASE_INTERVAL = 16     // base seconds between morph cycles
+const G_MORPH_RANDOM_RANGE = 10      // random extra seconds (16-26s between morphs)
+
+// ─── Glitch Flash Colors ─────────────────────────────────────────────
+const glitchFlashColors = [0x00ffff, 0xff00ff, 0xff1493, 0x00ff80, 0x8a2be2]
+
 // ─── Ghost Scene Class ───────────────────────────────────────────────
 export class GhostScene {
   private scene: THREE.Scene
@@ -221,6 +232,17 @@ export class GhostScene {
   private animationId: number | null = null
   private isInitialized = false
   private resizeTimeout: ReturnType<typeof setTimeout> | null = null
+
+  // ─── G Morph State ──────────────────────────────────────────────
+  private gMorphEnabled = false
+  private gMorphActive = false
+  private gMorphCycleTime = 0
+  private gMorphCooldown = 8  // first morph after 8 seconds
+  private gMorphInfluence = 0
+
+  // ─── Glitch Flash State ─────────────────────────────────────────
+  private glitchFlash = 0
+  private glitchColorIndex = 0
 
   private onReady: (() => void) | null = null
 
@@ -339,6 +361,12 @@ export class GhostScene {
     }
     ghostGeo.computeVertexNormals()
 
+    // Generate G morph target
+    const gMorphPositions = this.generateGMorphTarget(ghostGeo)
+    ghostGeo.morphAttributes.position = [
+      new THREE.Float32BufferAttribute(gMorphPositions, 3),
+    ]
+
     this.ghostMaterial = new THREE.MeshStandardMaterial({
       color: params.bodyColor,
       transparent: true,
@@ -351,6 +379,7 @@ export class GhostScene {
       alphaTest: 0.1,
     })
     this.ghostBody = new THREE.Mesh(ghostGeo, this.ghostMaterial)
+    this.ghostBody.morphTargetInfluences = [0]
     this.ghostGroup.add(this.ghostBody)
 
     // Eyes
@@ -512,7 +541,120 @@ export class GhostScene {
     this.particles.push(particle)
   }
 
+  // ─── G Morph Target Generation ─────────────────────────────────
+  private generateGMorphTarget(geo: THREE.SphereGeometry): Float32Array {
+    const posAttr = geo.getAttribute('position')
+    const count = posAttr.count
+    const morphPositions = new Float32Array(count * 3)
+
+    // Render "G" on an offscreen canvas to get the filled letter shape
+    const size = 128
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+    const ctx = canvas.getContext('2d')!
+
+    ctx.fillStyle = 'black'
+    ctx.fillRect(0, 0, size, size)
+
+    // Draw a bold "G" — use system font (always available)
+    ctx.fillStyle = 'white'
+    ctx.font = `bold ${Math.floor(size * 0.82)}px Arial, Helvetica, sans-serif`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('G', size / 2, size / 2)
+
+    const imageData = ctx.getImageData(0, 0, size, size).data
+
+    // Helper: check if a world-space (x, y) maps to a white pixel (inside G)
+    const worldToPixel = (wx: number, wy: number): { px: number; py: number } => ({
+      px: Math.floor(((wx + 2.2) / 4.4) * size),
+      py: Math.floor(((2.2 - wy) / 4.4) * size),
+    })
+
+    const isWhite = (px: number, py: number): boolean => {
+      if (px < 0 || px >= size || py < 0 || py >= size) return false
+      return imageData[(py * size + px) * 4] > 128
+    }
+
+    // For outside vertices, find nearest white pixel via expanding ring search
+    const findNearestG = (wx: number, wy: number): { x: number; y: number } => {
+      const { px: cx, py: cy } = worldToPixel(wx, wy)
+      let bestDist = Infinity
+      let bestPx = cx
+      let bestPy = cy
+
+      for (let r = 1; r < size; r += 1) {
+        let found = false
+        // Search along ring perimeter
+        const steps = Math.max(8, r * 4)
+        for (let s = 0; s < steps; s++) {
+          const angle = (s / steps) * Math.PI * 2
+          const sx = Math.round(cx + Math.cos(angle) * r)
+          const sy = Math.round(cy + Math.sin(angle) * r)
+          if (isWhite(sx, sy)) {
+            const d = (sx - cx) ** 2 + (sy - cy) ** 2
+            if (d < bestDist) {
+              bestDist = d
+              bestPx = sx
+              bestPy = sy
+              found = true
+            }
+          }
+        }
+        if (found) break
+      }
+
+      // Convert pixel back to world coordinates
+      return {
+        x: (bestPx / size) * 4.4 - 2.2,
+        y: 2.2 - (bestPy / size) * 4.4,
+      }
+    }
+
+    for (let i = 0; i < count; i++) {
+      const x = posAttr.getX(i)
+      const y = posAttr.getY(i)
+      const z = posAttr.getZ(i)
+
+      const { px, py } = worldToPixel(x, y)
+
+      if (isWhite(px, py)) {
+        // Inside G shape: keep x/y, flatten Z for a thin extruded look
+        morphPositions[i * 3] = x
+        morphPositions[i * 3 + 1] = y
+        morphPositions[i * 3 + 2] = z * 0.15
+      } else {
+        // Outside G: pull vertex to nearest G surface point
+        const nearest = findNearestG(x, y)
+        morphPositions[i * 3] = nearest.x
+        morphPositions[i * 3 + 1] = nearest.y
+        morphPositions[i * 3 + 2] = z * 0.1
+      }
+    }
+
+    return morphPositions
+  }
+
   // ─── Public API ──────────────────────────────────────────────────
+  triggerGlitch() {
+    this.glitchFlash = 1.0
+    this.glitchColorIndex = (this.glitchColorIndex + 1) % glitchFlashColors.length
+  }
+
+  setGMorphEnabled(enabled: boolean) {
+    this.gMorphEnabled = enabled
+    if (!enabled) {
+      // Reset morph state
+      this.gMorphActive = false
+      this.gMorphCycleTime = 0
+      this.gMorphInfluence = 0
+      if (this.ghostBody.morphTargetInfluences) {
+        this.ghostBody.morphTargetInfluences[0] = 0
+      }
+    }
+  }
+
   setMouse(x: number, y: number) {
     const now = performance.now()
     if (now - this.lastMouseUpdate > 16) {
@@ -656,6 +798,76 @@ export class GhostScene {
           this.particles.splice(idx, 1)
         }
       }
+    }
+
+    // ─── G Morph Animation ────────────────────────────────────────
+    const deltaSeconds = deltaTime / 1000
+    if (this.gMorphEnabled) {
+      if (!this.gMorphActive) {
+        this.gMorphCooldown -= deltaSeconds
+        if (this.gMorphCooldown <= 0) {
+          this.gMorphActive = true
+          this.gMorphCycleTime = 0
+        }
+      }
+
+      if (this.gMorphActive) {
+        this.gMorphCycleTime += deltaSeconds
+
+        if (this.gMorphCycleTime < G_MORPH_IN_DURATION) {
+          // Morphing in: ghost → G
+          const t = this.gMorphCycleTime / G_MORPH_IN_DURATION
+          this.gMorphInfluence = t * t * (3 - 2 * t) // smoothstep
+        } else if (this.gMorphCycleTime < G_MORPH_IN_DURATION + G_MORPH_HOLD_DURATION) {
+          // Holding G shape
+          this.gMorphInfluence = 1
+        } else if (this.gMorphCycleTime < G_MORPH_TOTAL) {
+          // Morphing out: G → ghost
+          const t = (this.gMorphCycleTime - G_MORPH_IN_DURATION - G_MORPH_HOLD_DURATION) / G_MORPH_OUT_DURATION
+          this.gMorphInfluence = 1 - t * t * (3 - 2 * t)
+        } else {
+          // Cycle complete — reset
+          this.gMorphInfluence = 0
+          this.gMorphActive = false
+          this.gMorphCooldown = G_MORPH_BASE_INTERVAL + Math.random() * G_MORPH_RANDOM_RANGE
+        }
+
+        if (this.ghostBody.morphTargetInfluences) {
+          this.ghostBody.morphTargetInfluences[0] = this.gMorphInfluence
+        }
+      }
+    }
+
+    // ─── Glitch Flash Effect ──────────────────────────────────────
+    if (this.glitchFlash > 0) {
+      this.glitchFlash *= 0.91 // Rapid exponential decay (~400ms to near zero)
+      if (this.glitchFlash < 0.01) this.glitchFlash = 0
+
+      // Flash emissive color and intensity
+      const flashColor = glitchFlashColors[this.glitchColorIndex]
+      if (this.glitchFlash > 0.25) {
+        this.ghostMaterial.emissive.setHex(flashColor)
+      } else {
+        this.ghostMaterial.emissive.setHex(fluorescentColors[params.glowColor])
+      }
+      this.ghostMaterial.emissiveIntensity = params.emissiveIntensity + pulse1 + breathe + this.glitchFlash * 10
+      this.bloomPass.strength = 0.3 + this.glitchFlash * 1.5
+
+      // Flash eye color too
+      const eyeFlashOp = Math.min(1, newOp + this.glitchFlash * 0.8)
+      this.eyes.leftEyeMaterial.opacity = eyeFlashOp
+      this.eyes.rightEyeMaterial.opacity = eyeFlashOp
+      if (this.glitchFlash > 0.3) {
+        this.eyes.leftEyeMaterial.color.setHex(flashColor)
+        this.eyes.rightEyeMaterial.color.setHex(flashColor)
+      } else {
+        const eyeColor = fluorescentColors[params.eyeGlowColor]
+        this.eyes.leftEyeMaterial.color.setHex(eyeColor)
+        this.eyes.rightEyeMaterial.color.setHex(eyeColor)
+      }
+    } else {
+      // Normal bloom
+      this.bloomPass.strength = 0.3
     }
 
     this.composer.render()
