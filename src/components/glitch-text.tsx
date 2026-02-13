@@ -148,7 +148,7 @@ function GlitchLine({
     return () => { cancelled = true }
   }, [revealed, active, text])
 
-  const opacity = displayText ? 1 : 0
+  const opacity = displayText ? 0.12 : 0
 
   return (
     <div
@@ -162,8 +162,8 @@ function GlitchLine({
         opacity,
         color: '#e5e5e5',
         textShadow: glitching
-          ? '2px 0 #00ffff, -2px 0 #ff4500, 0 0 20px rgba(0,255,255,0.3)'
-          : '0 0 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.7), 0 0 10px rgba(229,229,229,0.2)',
+          ? '2px 0 rgba(0,255,255,0.3), -2px 0 rgba(255,69,0,0.3)'
+          : 'none',
         transform: glitching
           ? `translate(${(Math.random() - 0.5) * 3}px, ${(Math.random() - 0.5) * 2}px)`
           : 'none',
@@ -196,21 +196,11 @@ export default function GlitchText({ active = false, className = '', onComplete 
   return (
     <div
       className={`
-        fixed inset-0 z-20 flex flex-col items-center justify-center
+        fixed inset-0 z-5 flex flex-col items-center justify-center
         pointer-events-none select-none -translate-y-[5vh]
         ${className}
       `}
     >
-      {/* Dark vignette behind text for readability over angel particles */}
-      {active && (
-        <div
-          className="absolute inset-0"
-          style={{
-            background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.3) 50%, transparent 80%)',
-            pointerEvents: 'none',
-          }}
-        />
-      )}
       <div className="relative flex flex-col items-center gap-2 md:gap-3">
         {LINES.map((line, i) => (
           <GlitchLine
