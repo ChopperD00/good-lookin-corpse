@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 interface CtaOverlayProps { isVisible: boolean }
+
+const SUBTITLE_TEXT = "Can't Kill What's Already Dead"
 
 const SCRAMBLE_CHARS = '\u25A0\u25AA\u258C\u2590\u25AC\u2591\u2592\u2593\u2588\u2584\u2580'
 
@@ -230,6 +232,134 @@ function GlitchButtonText() {
   )
 }
 
+/** Kinetic subtitle — scramble reveal + periodic micro-glitches with character splitting */
+function KineticSubtitle({ active }: { active: boolean }) {
+  const [displayText, setDisplayText] = useState('')
+  const [revealed, setRevealed] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const rafRef = useRef<number>(0)
+
+  // Scramble reveal
+  useEffect(() => {
+    if (!active) {
+      setDisplayText('')
+      setRevealed(false)
+      setExpanded(false)
+      return
+    }
+
+    const startTime = performance.now() + 600 // delay after CTA appears
+    const duration = 1200
+    let cancelled = false
+
+    function tick() {
+      if (cancelled) return
+      const elapsed = performance.now() - startTime
+      if (elapsed < 0) {
+        rafRef.current = requestAnimationFrame(tick)
+        return
+      }
+      const progress = Math.min(1, elapsed / duration)
+      const len = SUBTITLE_TEXT.length
+      const revealedCount = Math.floor(progress * len)
+      let result = ''
+      for (let i = 0; i < len; i++) {
+        if (SUBTITLE_TEXT[i] === ' ' || SUBTITLE_TEXT[i] === "'") {
+          result += SUBTITLE_TEXT[i]
+        } else if (i < revealedCount) {
+          result += SUBTITLE_TEXT[i]
+        } else {
+          result += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)]
+        }
+      }
+      setDisplayText(result)
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(tick)
+      } else {
+        setDisplayText(SUBTITLE_TEXT)
+        setRevealed(true)
+      }
+    }
+
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { cancelled = true; cancelAnimationFrame(rafRef.current) }
+  }, [active])
+
+  // Periodic micro-glitch with character expansion
+  useEffect(() => {
+    if (!revealed || !active) return
+    let cancelled = false
+
+    function microGlitch() {
+      if (cancelled) return
+      const nextDelay = 3000 + Math.random() * 6000
+      setTimeout(() => {
+        if (cancelled) return
+        setExpanded(true)
+
+        let frame = 0
+        const maxFrames = 3 + Math.floor(Math.random() * 4)
+        function glitchTick() {
+          if (cancelled || frame >= maxFrames) {
+            setDisplayText(SUBTITLE_TEXT)
+            setTimeout(() => {
+              if (!cancelled) setExpanded(false)
+            }, 200 + Math.random() * 400)
+            microGlitch()
+            return
+          }
+          const chars = SUBTITLE_TEXT.split('')
+          const numGlitch = 1 + Math.floor(Math.random() * 2)
+          for (let n = 0; n < numGlitch; n++) {
+            const idx = Math.floor(Math.random() * chars.length)
+            if (chars[idx] !== ' ' && chars[idx] !== "'") {
+              chars[idx] = SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)]
+            }
+          }
+          setDisplayText(chars.join(''))
+          frame++
+          requestAnimationFrame(glitchTick)
+        }
+        requestAnimationFrame(glitchTick)
+      }, nextDelay)
+    }
+
+    microGlitch()
+    return () => { cancelled = true }
+  }, [revealed, active])
+
+  const chars = displayText.split('')
+
+  return (
+    <span className="inline-flex items-center justify-center flex-wrap">
+      {revealed ? (
+        chars.map((c, i) => {
+          if (c === ' ') return <span key={i} className="inline-block w-[0.35em]">&nbsp;</span>
+          if (c === "'") return <span key={i} className="inline-block">&apos;</span>
+          return (
+            <span
+              key={i}
+              className={`split-char ${expanded ? 'expanded' : ''}`}
+              style={{
+                maxWidth: expanded ? '1.2em' : '0.7em',
+                animationDelay: `${i * 0.02}s`,
+                opacity: 1,
+                transition: `max-width 0.5s cubic-bezier(0.86, 0, 0.07, 1), opacity 0.15s ease`,
+                fontSize: 'inherit',
+                letterSpacing: 'inherit',
+              }}
+            >
+              <span className="split-char-inner">{c}</span>
+            </span>
+          )
+        })
+      ) : (
+        displayText
+      )}
+    </span>
+  )
+}
+
 export default function CtaOverlay({ isVisible }: CtaOverlayProps) {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
@@ -260,7 +390,7 @@ export default function CtaOverlay({ isVisible }: CtaOverlayProps) {
 
   return (
     <div
-      className={`fixed inset-0 z-10 flex flex-col items-center pointer-events-none transition-opacity duration-1000 ${
+      className={`fixed inset-0 z-30 flex flex-col items-center pointer-events-none transition-opacity duration-1000 ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >
@@ -272,7 +402,7 @@ export default function CtaOverlay({ isVisible }: CtaOverlayProps) {
           }`}
         >
           <h1
-            className="font-display tracking-tight leading-[0.85] text-spectral"
+            className="font-casket tracking-tight leading-[0.85] text-spectral"
             style={{
               fontSize: 'clamp(3.5rem, 12vw, 10rem)',
               textShadow: '0 0 60px rgba(0,0,0,0.9), 0 0 120px rgba(0,0,0,0.7), 0 0 20px rgba(229,229,229,0.15)',
@@ -299,11 +429,11 @@ export default function CtaOverlay({ isVisible }: CtaOverlayProps) {
             </span>
           </h1>
           <p
-            className={`mt-4 font-mono text-[10px] sm:text-xs text-white/30 tracking-[0.5em] uppercase transition-all duration-1000 delay-500 ${
+            className={`mt-8 font-casket text-[11px] sm:text-sm text-white/40 tracking-[0.5em] uppercase subtitle-pulse transition-all duration-1000 delay-500 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
-            Can&apos;t Kill What&apos;s Already Dead
+            <KineticSubtitle active={isVisible} />
           </p>
         </div>
       </div>

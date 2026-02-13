@@ -3,52 +3,63 @@
 /**
  * SceneController — Orchestrates the full landing page sequence:
  *
- * 1. TV Static preloader (1-2s)
+ * 1. TV Static preloader (2s)
  * 2. Ghost glitches onto screen (via ghost-canvas)
- * 3. Hold ghost for 3-5 seconds
+ * 3. Hold ghost briefly (3s)
  * 4. CRT TV-off effect
- * 5. Angel particles form from "GOOD LOOKIN CORPSE" text (audio-reactive)
- * 6. Ghost returns with glitch text overlay, flies through angels
+ * 5. Happy face appears (procedural particles) — 2s
+ * 6. Face melts into skull — 2s
+ * 7. Skull holds with glowing eyes — 3s
+ * 8. Skull dissolves into particles — 2.5s
+ * 9. Ghost returns, text pops + background type + CTA
  *
- * Each phase is driven by a state machine.
+ * Background type ("LIVE FAST DIE YOUNG...") is large translucent text behind everything.
+ * Scattered text pops ("CAN'T KILL WHAT'S ALREADY DEAD") glitch in/out with color.
+ * No angel phase.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import TVStatic from './tv-static'
 import CrtEffect from './crt-effect'
-import GlitchText from './glitch-text'
+import BackgroundType from './background-type'
+import ScatteredTextPops from './scattered-text-pops'
 import CtaOverlay from './cta-overlay'
-import type { AudioBands } from '@/lib/audio-analyzer'
 
-// Lazy-load heavy Three.js components
+// Lazy-load heavy canvas components
 const GhostCanvas = dynamic(() => import('./ghost-canvas'), { ssr: false })
-const AngelCanvas = dynamic(() => import('./angel-canvas'), { ssr: false })
+const FaceSkullCanvas = dynamic(() => import('./face-skull-canvas'), { ssr: false })
 
 type Phase =
   | 'static'        // TV static preloader
   | 'ghost-enter'   // Ghost glitches in
   | 'ghost-hold'    // Ghost visible, holding
   | 'crt-off'       // CRT turn-off transition
-  | 'angel'         // Angel particles form from text (audio-reactive)
-  | 'ghost-return'  // Ghost returns with glitch text
+  | 'face'          // Happy face appears (procedural)
+  | 'melt'          // Face melts into skull
+  | 'skull'         // Skull holds, eyes glow
+  | 'dissolve'      // Skull dissolves to particles
+  | 'ghost-return'  // Ghost returns with all overlays + CTA
 
-const GHOST_HOLD_DURATION = 4000 // 4 seconds
-const STATIC_DURATION = 2000     // 2 seconds initial static
-const ANGEL_DURATION = 12000     // 12 seconds of angel particles before ghost returns
+const GHOST_HOLD_DURATION = 3000
+const STATIC_DURATION = 2000
 
 export default function SceneController() {
   const [phase, setPhase] = useState<Phase>('static')
   const [staticOpacity, setStaticOpacity] = useState(1)
   const [ghostOpacity, setGhostOpacity] = useState(0)
-  const [angelOpacity, setAngelOpacity] = useState(0)
   const [showCta, setShowCta] = useState(false)
-  const [glitchTextFading, setGlitchTextFading] = useState(false)
-  const [audioBands, setAudioBands] = useState<AudioBands>({ bass: 0, mid: 0, high: 0, overall: 0 })
-  const [ghostPosition, setGhostPosition] = useState<{ x: number; y: number }>({ x: -1, y: -1 })
   const [glitchTrigger, setGlitchTrigger] = useState(0)
-  const audioRef = useRef<any>(null)
   const phaseRef = useRef<Phase>('static')
+
+  // Skull canvas phase mapping
+  const faceSkullPhase = (() => {
+    if (phase === 'face') return 'face' as const
+    if (phase === 'melt') return 'melt' as const
+    if (phase === 'skull') return 'skull' as const
+    if (phase === 'dissolve') return 'dissolve' as const
+    return 'idle' as const
+  })()
 
   // Keep ref in sync
   useEffect(() => { phaseRef.current = phase }, [phase])
@@ -56,19 +67,15 @@ export default function SceneController() {
   // ─── Phase: STATIC ──────────────────────────────────────
   useEffect(() => {
     if (phase !== 'static') return
-    const timer = setTimeout(() => {
-      setPhase('ghost-enter')
-    }, STATIC_DURATION)
+    const timer = setTimeout(() => setPhase('ghost-enter'), STATIC_DURATION)
     return () => clearTimeout(timer)
   }, [phase])
 
   // ─── Phase: GHOST ENTER ─────────────────────────────────
   const handleGhostReady = useCallback(() => {
     if (phaseRef.current !== 'ghost-enter') return
-    // Fade out static, fade in ghost
     setStaticOpacity(0)
     setGhostOpacity(1)
-    // After ghost is visible, hold it
     setTimeout(() => {
       if (phaseRef.current === 'ghost-enter') {
         setPhase('ghost-hold')
@@ -79,106 +86,43 @@ export default function SceneController() {
   // ─── Phase: GHOST HOLD ──────────────────────────────────
   useEffect(() => {
     if (phase !== 'ghost-hold') return
-    const timer = setTimeout(() => {
-      setPhase('crt-off')
-    }, GHOST_HOLD_DURATION)
+    const timer = setTimeout(() => setPhase('crt-off'), GHOST_HOLD_DURATION)
     return () => clearTimeout(timer)
   }, [phase])
 
-  // ─── Phase: CRT OFF ─────────────────────────────────────
+  // ─── Phase: CRT OFF → FACE ─────────────────────────────
   const handleCrtComplete = useCallback(() => {
     setGhostOpacity(0)
-    setPhase('angel')
+    setPhase('face')
   }, [])
 
-  // ─── Phase: ANGEL ─────────────────────────────────────
-  useEffect(() => {
-    if (phase !== 'angel') return
-
-    // Initialize audio analyzer for microphone reactivity
-    async function initAudio() {
-      try {
-        const { AudioAnalyzer } = await import('@/lib/audio-analyzer')
-        const analyzer = new AudioAnalyzer()
-        const ok = await analyzer.init()
-        if (ok) {
-          audioRef.current = analyzer
-          function pollAudio() {
-            if (phaseRef.current !== 'angel' && phaseRef.current !== 'ghost-return') {
-              return
-            }
-            if (audioRef.current?.isActive) {
-              setAudioBands(audioRef.current.getBands())
-            }
-            requestAnimationFrame(pollAudio)
-          }
-          requestAnimationFrame(pollAudio)
-        }
-      } catch {
-        // Audio not available — angels still work without it
-      }
-    }
-
-    // Fade in angel particles
-    setAngelOpacity(1)
-    // Keep a good amount of static as background texture
-    setStaticOpacity(0.12)
-
-    initAudio()
-
-    // After angel duration, transition to ghost return
-    const timer = setTimeout(() => {
-      setPhase('ghost-return')
-    }, ANGEL_DURATION)
-
-    return () => clearTimeout(timer)
-  }, [phase])
+  // ─── Face/Skull phase transitions ───────────────────────
+  const handleFaceSkullComplete = useCallback((completedPhase: string) => {
+    if (completedPhase === 'face') setPhase('melt')
+    else if (completedPhase === 'melt') setPhase('skull')
+    else if (completedPhase === 'skull') setPhase('dissolve')
+    else if (completedPhase === 'dissolve') setPhase('ghost-return')
+  }, [])
 
   // ─── Phase: GHOST RETURN ────────────────────────────────
   useEffect(() => {
     if (phase !== 'ghost-return') return
 
-    // Dim angel particles so glitch text is readable
-    setAngelOpacity(0.35)
     setGhostOpacity(1)
-    // Keep visible static in the background
-    setStaticOpacity(0.10)
+    setStaticOpacity(0.08) // Subtle static texture
 
-    // Fade glitch text, then show CTA brand mark
-    const fadeTimer = setTimeout(() => {
-      setGlitchTextFading(true)
-    }, 2500)
-    const ctaTimer = setTimeout(() => {
-      setShowCta(true)
-    }, 3000)
-
-    // Simulate ghost flying across screen for angel interaction
-    // The ghost-canvas moves the ghost — we approximate its position
-    let ghostFrame = 0
-    function updateGhostPos() {
-      if (phaseRef.current !== 'ghost-return') return
-      ghostFrame++
-      // Ghost roughly moves in a sine wave pattern
-      const t = ghostFrame / 120
-      const gx = 0.3 + Math.sin(t * 0.7) * 0.3
-      const gy = 0.4 + Math.cos(t * 0.5) * 0.2
-      setGhostPosition({ x: gx, y: gy })
-      requestAnimationFrame(updateGhostPos)
-    }
-    requestAnimationFrame(updateGhostPos)
+    const ctaTimer = setTimeout(() => setShowCta(true), 1500)
 
     return () => {
-      clearTimeout(fadeTimer)
       clearTimeout(ctaTimer)
     }
   }, [phase])
 
-  // Cleanup audio on unmount
-  useEffect(() => {
-    return () => {
-      audioRef.current?.destroy()
-    }
-  }, [])
+  // Determine what's shown
+  const showGhost = phase === 'ghost-enter' || phase === 'ghost-hold' || phase === 'crt-off' || phase === 'ghost-return'
+  const showFaceSkull = phase === 'face' || phase === 'melt' || phase === 'skull' || phase === 'dissolve'
+  const showBgType = phase === 'ghost-return'
+  const showTextPops = phase === 'ghost-return'
 
   return (
     <main className="relative w-full h-screen overflow-hidden bg-black">
@@ -189,8 +133,14 @@ export default function SceneController() {
         intensity={phase === 'static' ? 1 : 0.5}
       />
 
-      {/* Ghost Canvas — rendered when needed */}
-      {(phase === 'ghost-enter' || phase === 'ghost-hold' || phase === 'crt-off' || phase === 'ghost-return') && (
+      {/* Background type — large translucent "LIVE FAST DIE YOUNG..." */}
+      <BackgroundType active={showBgType} />
+
+      {/* Scattered text pops — "CAN'T KILL WHAT'S ALREADY DEAD" etc. */}
+      <ScatteredTextPops active={showTextPops} />
+
+      {/* Ghost Canvas */}
+      {showGhost && (
         <div
           className="fixed inset-0 z-10 transition-opacity duration-1000"
           style={{ opacity: ghostOpacity }}
@@ -209,30 +159,13 @@ export default function SceneController() {
         onComplete={handleCrtComplete}
       />
 
-      {/* Angel Particle Canvas — persists through ghost-return for interaction */}
-      {(phase === 'angel' || phase === 'ghost-return') && (
-        <div
-          className="fixed inset-0 z-10 transition-opacity duration-1500"
-          style={{ opacity: angelOpacity }}
-        >
-          <AngelCanvas
-            audioBands={audioBands}
-            opacity={angelOpacity}
-            ghostPosition={phase === 'ghost-return' ? ghostPosition : undefined}
-          />
-        </div>
-      )}
-
-      {/* Glitch Text Overlay — appears during ghost return, fades before CTA */}
-      <div
-        className="transition-opacity duration-700"
-        style={{ opacity: glitchTextFading ? 0 : 1 }}
-      >
-        <GlitchText
-          active={phase === 'ghost-return'}
-          onGlitch={() => setGlitchTrigger(c => c + 1)}
+      {/* Face → Skull procedural canvas */}
+      {showFaceSkull && (
+        <FaceSkullCanvas
+          phase={faceSkullPhase}
+          onPhaseComplete={handleFaceSkullComplete}
         />
-      </div>
+      )}
 
       {/* CTA Overlay */}
       <CtaOverlay isVisible={showCta} />

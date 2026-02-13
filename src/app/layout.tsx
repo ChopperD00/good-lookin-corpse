@@ -78,7 +78,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${creepster.variable} ${bebasNeue.variable} ${playfair.variable} ${specialElite.variable}`}>
-      <body className="bg-black text-spectral font-sans antialiased grain-overlay">
+      <body className="bg-black text-spectral font-casket antialiased grain-overlay">
         {children}
       </body>
     </html>
