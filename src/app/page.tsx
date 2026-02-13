@@ -1,16 +1,18 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import Preloader from '@/components/preloader'
-import CtaOverlay from '@/components/cta-overlay'
 import MobileFallback from '@/components/mobile-fallback'
 
-const GhostCanvas = dynamic(() => import('@/components/ghost-canvas'), { ssr: false })
+// Lazy-load the scene controller — no SSR (Three.js)
+const SceneController = dynamic(() => import('@/components/scene-controller'), {
+  ssr: false,
+  loading: () => (
+    <div className="fixed inset-0 bg-black" />
+  ),
+})
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(true)
-  const [sceneReady, setSceneReady] = useState(false)
   const [supportsWebGL, setSupportsWebGL] = useState<boolean | null>(null)
 
   useEffect(() => {
@@ -21,33 +23,18 @@ export default function Home() {
     detect()
   }, [])
 
-  const handleSceneReady = useCallback(() => {
-    setSceneReady(true)
-    setTimeout(() => setIsLoading(false), 1500)
-  }, [])
+  // Still detecting
+  if (supportsWebGL === null) {
+    return <div className="fixed inset-0 bg-black" />
+  }
 
-  if (supportsWebGL === null) return <Preloader isLoading={true} />
+  if (!supportsWebGL) {
+    return (
+      <main className="relative w-full h-screen overflow-hidden bg-black">
+        <MobileFallback />
+      </main>
+    )
+  }
 
-  return (
-    <main className="relative w-full h-screen overflow-hidden bg-black">
-      <Preloader isLoading={isLoading} />
-      {supportsWebGL ? (
-        <GhostCanvas onReady={handleSceneReady} />
-      ) : (
-        <>
-          <MobileFallback />
-          {isLoading && <FallbackReady onReady={() => { setSceneReady(true); setTimeout(() => setIsLoading(false), 800) }} />}
-        </>
-      )}
-      <CtaOverlay isVisible={sceneReady && !isLoading} />
-    </main>
-  )
-}
-
-function FallbackReady({ onReady }: { onReady: () => void }) {
-  useEffect(() => {
-    const timer = setTimeout(onReady, 500)
-    return () => clearTimeout(timer)
-  }, [onReady])
-  return null
+  return <SceneController />
 }

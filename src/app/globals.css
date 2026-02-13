@@ -2,9 +2,99 @@
 @tailwind components;
 @tailwind utilities;
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; overflow: hidden; background: #000; color: #f5f5f5; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-::selection { background: rgba(0, 255, 255, 0.15); color: #f5f5f5; }
-::-webkit-scrollbar { display: none; }
-canvas { display: block; outline: none; }
-.grain-overlay::after { content: ''; position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0.025; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E"); background-size: 128px 128px; animation: grain 0.5s steps(1) infinite; }
+/* ─── Base Reset ──────────────────────────────────────────── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  color: #f5f5f5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Selection ───────────────────────────────────────────── */
+::selection {
+  background: rgba(0, 255, 255, 0.15);
+  color: #f5f5f5;
+}
+
+/* ─── Scrollbar (hidden — single viewport app) ────────────── */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── Canvas ──────────────────────────────────────────────── */
+canvas {
+  display: block;
+  outline: none;
+}
+
+/* ─── Subtle grain overlay ────────────────────────────────── */
+.grain-overlay::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  animation: grain 0.5s steps(1) infinite;
+}
+
+/* ─── CRT TV-off effect keyframes ────────────────────────── */
+@keyframes crt-flash {
+  0% { opacity: 0; }
+  5% { opacity: 0.8; }
+  15% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes crt-line {
+  0% { transform: translateY(-50%) scaleX(1); opacity: 0; }
+  15% { transform: translateY(-50%) scaleX(1); opacity: 1; }
+  60% { transform: translateY(-50%) scaleX(1); opacity: 1; }
+  100% { transform: translateY(-50%) scaleX(0); opacity: 0; }
+}
+
+@keyframes crt-dot {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  60% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  70% { transform: translate(-50%, -50%) scale(8); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+}
+
+.animate-crt-flash {
+  animation: crt-flash 0.8s ease-out forwards;
+}
+
+.animate-crt-line {
+  animation: crt-line 1s ease-in-out forwards;
+}
+
+.animate-crt-dot {
+  animation: crt-dot 1.5s ease-out forwards;
+}
+
+/* ─── Glitch flicker for text ────────────────────────────── */
+@keyframes glitchFlicker {
+  0%, 100% { opacity: 1; }
+  10% { opacity: 0.8; }
+  20% { opacity: 1; }
+  30% { opacity: 0.6; clip-path: inset(20% 0 30% 0); }
+  35% { opacity: 1; clip-path: none; }
+  50% { opacity: 0.9; }
+  70% { opacity: 0.7; clip-path: inset(50% 0 10% 0); }
+  75% { opacity: 1; clip-path: none; }
+}
+
+.glitch-flicker {
+  animation: glitchFlicker 0.15s steps(1) infinite;
+}
