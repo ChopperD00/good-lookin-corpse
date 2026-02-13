@@ -46,7 +46,6 @@ function GlitchLine({
   font,
   size,
   weight,
-  italic,
   delay,
   active,
 }: {
@@ -54,7 +53,6 @@ function GlitchLine({
   font: string
   size: string
   weight: string
-  italic?: boolean
   delay: number
   active: boolean
 }) {
@@ -156,7 +154,6 @@ function GlitchLine({
     <div
       className={`
         ${font} ${size} ${weight}
-        ${italic ? 'italic' : ''}
         transition-opacity duration-300
         ${glitching ? 'glitch-flicker' : ''}
         tracking-wider leading-none
@@ -212,7 +209,6 @@ export default function GlitchText({ active = false, className = '', onComplete 
             font={line.font}
             size={line.size}
             weight={line.weight}
-            italic={line.italic}
             delay={i * 300}
             active={active}
           />
